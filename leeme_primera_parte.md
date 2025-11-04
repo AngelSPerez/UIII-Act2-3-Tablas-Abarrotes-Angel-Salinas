@@ -1,7 +1,7 @@
 # Proyecto: TiendaAbarrotes (Django)
-# Archivos de Código del Proyecto
+## Archivos de Código del Proyecto
 
-## --- backend_Tienda/settings.py (Fragmento) ---
+### --- backend_Tienda/settings.py (Fragmento) ---
 
 ```python
 # Application definition
