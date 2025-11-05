@@ -19,11 +19,11 @@ UIII_Tienda_1160/
 │  │  ├─ navbar.html
 │  │  ├─ footer.html
 │  │  ├─ inicio.html
-│  │  └─ categoria/
-│  │     ├─ agregar_categoria.html
-│  │     ├─ ver_categorias.html
-│  │     ├─ actualizar_categoria.html
-│  │     └─ borrar_categoria.html
+│  │  └─ producto/
+│  │     ├─ agregar_producto.html
+│  │     ├─ ver_productos.html
+│  │     ├─ actualizar_producto.html
+│  │     └─ borrar_producto.html
 │  ├─ admin.py
 │  ├─ apps.py
 │  ├─ models.py
@@ -81,17 +81,7 @@ class Producto(models.Model):
 ## app_Tienda/admin.py
 ```python
 from django.contrib import admin
-from .models import Categoria, Proveedor, Producto
-
-@admin.register(Categoria)
-class CategoriaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'pasillo', 'responsable_area', 'fecha_creacion', 'activa')
-    search_fields = ('nombre',)
-
-@admin.register(Proveedor)
-class ProveedorAdmin(admin.ModelAdmin):
-    list_display = ('nombre_empresa', 'nombre_contacto', 'telefono', 'email')
-    search_fields = ('nombre_empresa',)
+from .models import Producto
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
@@ -105,50 +95,49 @@ class ProductoAdmin(admin.ModelAdmin):
 ## app_Tienda/views.py
 ```python
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Categoria
+from .models import Producto
 
-def inicio_tienda(request):
-    categorias = Categoria.objects.filter(activa=True)
-    return render(request, 'inicio.html', {'categorias': categorias})
+def ver_productos(request):
+    productos = Producto.objects.all()
+    return render(request, 'producto/ver_productos.html', {'productos': productos})
 
-def agregar_categoria(request):
+def agregar_producto(request):
     if request.method == 'POST':
         nombre = request.POST.get('nombre')
         descripcion = request.POST.get('descripcion', '')
-        pasillo = request.POST.get('pasillo') or None
-        responsable_area = request.POST.get('responsable_area', '')
-        Categoria.objects.create(
+        precio_venta = request.POST.get('precio_venta')
+        stock = request.POST.get('stock', 0)
+        codigo_barras = request.POST.get('codigo_barras', '')
+        categoria_id = request.POST.get('categoria')
+        producto = Producto.objects.create(
             nombre=nombre,
             descripcion=descripcion,
-            pasillo=(int(pasillo) if pasillo else None),
-            responsable_area=responsable_area
+            precio_venta=precio_venta,
+            stock=stock,
+            codigo_barras=codigo_barras,
+            categoria_id=categoria_id
         )
-        return redirect('ver_categorias')
-    return render(request, 'categoria/agregar_categoria.html')
+        return redirect('ver_productos')
+    return render(request, 'producto/agregar_producto.html')
 
-def ver_categorias(request):
-    categorias = Categoria.objects.all().order_by('-fecha_creacion')
-    return render(request, 'categoria/ver_categorias.html', {'categorias': categorias})
-
-def actualizar_categoria(request, categoria_id):
-    categoria = get_object_or_404(Categoria, id=categoria_id)
+def actualizar_producto(request, producto_id):
+    producto = get_object_or_404(Producto, id=producto_id)
     if request.method == 'POST':
-        categoria.nombre = request.POST.get('nombre', categoria.nombre)
-        categoria.descripcion = request.POST.get('descripcion', categoria.descripcion)
-        pasillo = request.POST.get('pasillo')
-        categoria.pasillo = int(pasillo) if pasillo else None
-        categoria.responsable_area = request.POST.get('responsable_area', categoria.responsable_area)
-        categoria.activa = 'activa' in request.POST
-        categoria.save()
-        return redirect('ver_categorias')
-    return render(request, 'categoria/actualizar_categoria.html', {'categoria': categoria})
+        producto.nombre = request.POST.get('nombre', producto.nombre)
+        producto.descripcion = request.POST.get('descripcion', producto.descripcion)
+        producto.precio_venta = request.POST.get('precio_venta', producto.precio_venta)
+        producto.stock = request.POST.get('stock', producto.stock)
+        producto.codigo_barras = request.POST.get('codigo_barras', producto.codigo_barras)
+        producto.save()
+        return redirect('ver_productos')
+    return render(request, 'producto/actualizar_producto.html', {'producto': producto})
 
-def borrar_categoria(request, categoria_id):
-    categoria = get_object_or_404(Categoria, id=categoria_id)
+def borrar_producto(request, producto_id):
+    producto = get_object_or_404(Producto, id=producto_id)
     if request.method == 'POST':
-        categoria.delete()
-        return redirect('ver_categorias')
-    return render(request, 'categoria/borrar_categoria.html', {'categoria': categoria})
+        producto.delete()
+        return redirect('ver_productos')
+    return render(request, 'producto/borrar_producto.html', {'producto': producto})
 ```
 
 ---
@@ -159,11 +148,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.inicio_tienda, name='inicio_tienda'),
-    path('categorias/', views.ver_categorias, name='ver_categorias'),
-    path('categorias/agregar/', views.agregar_categoria, name='agregar_categoria'),
-    path('categorias/<int:categoria_id>/editar/', views.actualizar_categoria, name='actualizar_categoria'),
-    path('categorias/<int:categoria_id>/borrar/', views.borrar_categoria, name='borrar_categoria'),
+    path('productos/', views.ver_productos, name='ver_productos'),
+    path('productos/agregar/', views.agregar_producto, name='agregar_producto'),
+    path('productos/<int:producto_id>/editar/', views.actualizar_producto, name='actualizar_producto'),
+    path('productos/<int:producto_id>/borrar/', views.borrar_producto, name='borrar_producto'),
 ]
 ```
 
@@ -220,32 +208,17 @@ urlpatterns = [
 ```html
 <nav class="navbar navbar-expand-lg navbar-light bg-white border-top border-bottom">
   <div class="container">
-    <a class="navbar-brand" href="{% url 'inicio_tienda' %}">Abarrotes</a>
+    <a class="navbar-brand" href="#">Abarrotes</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navMain">
       <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="{% url 'inicio_tienda' %}">Inicio</a></li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Categorías</a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="{% url 'agregar_categoria' %}">Agregar Categoría</a></li>
-            <li><a class="dropdown-item" href="{% url 'ver_categorias' %}">Ver Categorías</a></li>
-          </ul>
-        </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Productos</a>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Agregar Producto</a></li>
-            <li><a class="dropdown-item" href="#">Ver Productos</a></li>
-          </ul>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Proveedores</a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Agregar Proveedor</a></li>
-            <li><a class="dropdown-item" href="#">Ver Proveedores</a></li>
+            <li><a class="dropdown-item" href="{% url 'agregar_producto' %}">Agregar Producto</a></li>
+            <li><a class="dropdown-item" href="{% url 'ver_productos' %}">Ver Productos</a></li>
           </ul>
         </li>
       </ul>
@@ -270,15 +243,7 @@ urlpatterns = [
 <div class="row">
   <div class="col-md-8">
     <h2>Bienvenido al Sistema de Administración</h2>
-    <p>Administra categorías, productos y proveedores de la tienda.</p>
-    <h5>Categorías activas</h5>
-    <ul>
-      {% for cat in categorias %}
-      <li>{{ cat.nombre }} — {{ cat.descripcion|default:"(sin descripción)" }}</li>
-      {% empty %}
-      <li>No hay categorías registradas.</li>
-      {% endfor %}
-    </ul>
+    <p>Administra los productos de la tienda.</p>
   </div>
   <div class="col-md-4">
     <img src="https://picsum.photos/seed/abarrotes/600/400" class="img-fluid rounded" alt="Tienda">
@@ -287,11 +252,11 @@ urlpatterns = [
 {% endblock %}
 ```
 
-### templates/categoria/agregar_categoria.html
+### templates/producto/agregar_producto.html
 ```html
 {% extends "base.html" %}
 {% block content %}
-<h3>Agregar Categoría</h3>
+<h3>Agregar Producto</h3>
 <form method="post">
   {% csrf_token %}
   <div class="mb-3">
@@ -303,138 +268,91 @@ urlpatterns = [
     <textarea name="descripcion" class="form-control"></textarea>
   </div>
   <div class="mb-3">
-    <label class="form-label">Pasillo</label>
-    <input name="pasillo" type="number" class="form-control">
+    <label class="form-label">Precio Venta</label>
+    <input name="precio_venta" type="number" step="0.01" class="form-control">
   </div>
-  <div class="mb-3 form-check">
-    <input name="activa" type="checkbox" class="form-check-input" checked>
-    <label class="form-check-label">Activa</label>
+  <div class="mb-3">
+    <label class="form-label">Stock</label>
+    <input name="stock" type="number" class="form-control">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Código de Barras</label>
+    <input name="codigo_barras" class="form-control">
   </div>
   <button class="btn btn-primary">Guardar</button>
 </form>
 {% endblock %}
 ```
 
-### templates/categoria/ver_categorias.html
+### templates/producto/ver_productos.html
 ```html
 {% extends "base.html" %}
 {% block content %}
-<h3>Ver Categorías</h3>
+<h3>Ver Productos</h3>
 <table class="table table-striped">
-  <thead><tr><th>Nombre</th><th>Pasillo</th><th>Responsable</th><th>Fecha</th><th>Activo</th><th>Acciones</th></tr></thead>
+  <thead><tr><th>Nombre</th><th>Precio</th><th>Stock</th><th>Categoría</th><th>Acciones</th></tr></thead>
   <tbody>
-    {% for c in categorias %}
+    {% for p in productos %}
     <tr>
-      <td>{{ c.nombre }}</td>
-      <td>{{ c.pasillo|default:"-" }}</td>
-      <td>{{ c.responsable_area|default:"-" }}</td>
-      <td>{{ c.fecha_creacion }}</td>
-      <td>{{ c.activa }}</td>
+      <td>{{ p.nombre }}</td>
+      <td>{{ p.precio_venta }}</td>
+      <td>{{ p.stock }}</td>
+      <td>{{ p.categoria|default:"-" }}</td>
       <td>
-        <a class="btn btn-sm btn-secondary" href="{% url 'actualizar_categoria' c.id %}">Editar</a>
-        <a class="btn btn-sm btn-danger" href="{% url 'borrar_categoria' c.id %}">Borrar</a>
+        <a class="btn btn-sm btn-secondary" href="{% url 'actualizar_producto' p.id %}">Editar</a>
+        <a class="btn btn-sm btn-danger" href="{% url 'borrar_producto' p.id %}">Borrar</a>
       </td>
     </tr>
     {% empty %}
-    <tr><td colspan="6">No hay categorías.</td></tr>
+    <tr><td colspan="5">No hay productos.</td></tr>
     {% endfor %}
   </tbody>
 </table>
 {% endblock %}
 ```
 
-### templates/categoria/actualizar_categoria.html
+### templates/producto/actualizar_producto.html
 ```html
 {% extends "base.html" %}
 {% block content %}
-<h3>Actualizar Categoría</h3>
+<h3>Actualizar Producto</h3>
 <form method="post">
   {% csrf_token %}
   <div class="mb-3">
     <label class="form-label">Nombre</label>
-    <input name="nombre" class="form-control" value="{{ categoria.nombre }}" required>
+    <input name="nombre" class="form-control" value="{{ producto.nombre }}" required>
   </div>
   <div class="mb-3">
     <label class="form-label">Descripción</label>
-    <textarea name="descripcion" class="form-control">{{ categoria.descripcion }}</textarea>
+    <textarea name="descripcion" class="form-control">{{ producto.descripcion }}</textarea>
   </div>
   <div class="mb-3">
-    <label class="form-label">Pasillo</label>
-    <input name="pasillo" type="number" class="form-control" value="{{ categoria.pasillo }}">
+    <label class="form-label">Precio Venta</label>
+    <input name="precio_venta" type="number" step="0.01" class="form-control" value="{{ producto.precio_venta }}">
   </div>
-  <div class="mb-3 form-check">
-    <input name="activa" type="checkbox" class="form-check-input" {% if categoria.activa %}checked{% endif %}>
-    <label class="form-check-label">Activa</label>
+  <div class="mb-3">
+    <label class="form-label">Stock</label>
+    <input name="stock" type="number" class="form-control" value="{{ producto.stock }}">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Código de Barras</label>
+    <input name="codigo_barras" class="form-control" value="{{ producto.codigo_barras }}">
   </div>
   <button class="btn btn-primary">Actualizar</button>
 </form>
 {% endblock %}
 ```
 
-### templates/categoria/borrar_categoria.html
+### templates/producto/borrar_producto.html
 ```html
 {% extends "base.html" %}
 {% block content %}
-<h3>Borrar Categoría</h3>
-<p>¿Desea borrar la categoría "<strong>{{ categoria.nombre }}</strong>"?</p>
+<h3>Borrar Producto</h3>
+<p>¿Desea borrar el producto "<strong>{{ producto.nombre }}</strong>"?</p>
 <form method="post">
   {% csrf_token %}
   <button class="btn btn-danger">Sí, borrar</button>
-  <a class="btn btn-secondary" href="{% url 'ver_categorias' %}">Cancelar</a>
+  <a class="btn btn-secondary" href="{% url 'ver_productos' %}">Cancelar</a>
 </form>
 {% endblock %}
-```
-
----
-
-## Procedimientos (README corto)
-```bash
-# Instrucciones rápidas
-python3 -m venv .venv
-source .venv/bin/activate  # En Linux / macOS
-# o en Windows: .venv\Scripts\activate
-pip install --upgrade pip
-pip install -r requirements.txt
-django-admin startproject backend_tienda .
-python manage.py startapp app_Tienda
-python manage.py makemigrations
-python manage.py migrate
-python manage.py runserver 8033
-```
-
----
-
-## requirements.txt
-```
-Django>=4.2
-```
-
----
-
-## .env.example
-```
-DEBUG=True
-SECRET_KEY=tu_secreto_aqui
-ALLOWED_HOSTS=localhost,127.0.0.1
-```
-
----
-
-## README corto
-```
-# TiendaAbarrotes
-
-Proyecto Django básico para administrar categorías, productos y proveedores.
-
-## Cómo ejecutar
-1. Crear entorno virtual
-2. Instalar dependencias: `pip install -r requirements.txt`
-3. Ejecutar en la raíz del proyecto: `django-admin startproject backend_tienda .`
-4. Crear la app: `python manage.py startapp app_Tienda`
-5. Agregar `app_Tienda` en `INSTALLED_APPS` dentro de backend_tienda/settings.py
-6. `python manage.py makemigrations`
-7. `python manage.py migrate`
-8. `python manage.py runserver 8033`
-
-Listo — abre http://127.0.0.1:8033
 ```
