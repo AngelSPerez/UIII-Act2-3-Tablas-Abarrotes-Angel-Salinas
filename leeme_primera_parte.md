@@ -182,6 +182,211 @@ urlpatterns = [
 
 ---
 
+## Templates completos (HTML)
+
+### templates/base.html
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sistema de Administración Abarrotes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  {% include "header.html" %}
+  {% include "navbar.html" %}
+  <main class="container my-4">
+    {% block content %}{% endblock %}
+  </main>
+  {% include "footer.html" %}
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+```
+
+### templates/header.html
+```html
+<header class="bg-white shadow-sm py-3">
+  <div class="container d-flex align-items-center">
+    <h1 class="h4 mb-0">Sistema de Administración Abarrotes</h1>
+    <div class="ms-auto text-muted">Bienvenido</div>
+  </div>
+</header>
+```
+
+### templates/navbar.html
+```html
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-top border-bottom">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'inicio_tienda' %}">Abarrotes</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMain">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="{% url 'inicio_tienda' %}">Inicio</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Categorías</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'agregar_categoria' %}">Agregar Categoría</a></li>
+            <li><a class="dropdown-item" href="{% url 'ver_categorias' %}">Ver Categorías</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Productos</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#">Agregar Producto</a></li>
+            <li><a class="dropdown-item" href="#">Ver Productos</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Proveedores</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#">Agregar Proveedor</a></li>
+            <li><a class="dropdown-item" href="#">Ver Proveedores</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+```
+
+### templates/footer.html
+```html
+<footer class="bg-white text-center py-3 border-top">
+  <div class="container">
+    <small>&copy; {{ now.year }} - Creado por Angel Salinas Pérez 5J. Todos los derechos reservados.</small>
+  </div>
+</footer>
+```
+
+### templates/inicio.html
+```html
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <h2>Bienvenido al Sistema de Administración</h2>
+    <p>Administra categorías, productos y proveedores de la tienda.</p>
+    <h5>Categorías activas</h5>
+    <ul>
+      {% for cat in categorias %}
+      <li>{{ cat.nombre }} — {{ cat.descripcion|default:"(sin descripción)" }}</li>
+      {% empty %}
+      <li>No hay categorías registradas.</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="col-md-4">
+    <img src="https://picsum.photos/seed/abarrotes/600/400" class="img-fluid rounded" alt="Tienda">
+  </div>
+</div>
+{% endblock %}
+```
+
+### templates/categoria/agregar_categoria.html
+```html
+{% extends "base.html" %}
+{% block content %}
+<h3>Agregar Categoría</h3>
+<form method="post">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label class="form-label">Nombre</label>
+    <input name="nombre" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Descripción</label>
+    <textarea name="descripcion" class="form-control"></textarea>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Pasillo</label>
+    <input name="pasillo" type="number" class="form-control">
+  </div>
+  <div class="mb-3 form-check">
+    <input name="activa" type="checkbox" class="form-check-input" checked>
+    <label class="form-check-label">Activa</label>
+  </div>
+  <button class="btn btn-primary">Guardar</button>
+</form>
+{% endblock %}
+```
+
+### templates/categoria/ver_categorias.html
+```html
+{% extends "base.html" %}
+{% block content %}
+<h3>Ver Categorías</h3>
+<table class="table table-striped">
+  <thead><tr><th>Nombre</th><th>Pasillo</th><th>Responsable</th><th>Fecha</th><th>Activo</th><th>Acciones</th></tr></thead>
+  <tbody>
+    {% for c in categorias %}
+    <tr>
+      <td>{{ c.nombre }}</td>
+      <td>{{ c.pasillo|default:"-" }}</td>
+      <td>{{ c.responsable_area|default:"-" }}</td>
+      <td>{{ c.fecha_creacion }}</td>
+      <td>{{ c.activa }}</td>
+      <td>
+        <a class="btn btn-sm btn-secondary" href="{% url 'actualizar_categoria' c.id %}">Editar</a>
+        <a class="btn btn-sm btn-danger" href="{% url 'borrar_categoria' c.id %}">Borrar</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6">No hay categorías.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+```
+
+### templates/categoria/actualizar_categoria.html
+```html
+{% extends "base.html" %}
+{% block content %}
+<h3>Actualizar Categoría</h3>
+<form method="post">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label class="form-label">Nombre</label>
+    <input name="nombre" class="form-control" value="{{ categoria.nombre }}" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Descripción</label>
+    <textarea name="descripcion" class="form-control">{{ categoria.descripcion }}</textarea>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Pasillo</label>
+    <input name="pasillo" type="number" class="form-control" value="{{ categoria.pasillo }}">
+  </div>
+  <div class="mb-3 form-check">
+    <input name="activa" type="checkbox" class="form-check-input" {% if categoria.activa %}checked{% endif %}>
+    <label class="form-check-label">Activa</label>
+  </div>
+  <button class="btn btn-primary">Actualizar</button>
+</form>
+{% endblock %}
+```
+
+### templates/categoria/borrar_categoria.html
+```html
+{% extends "base.html" %}
+{% block content %}
+<h3>Borrar Categoría</h3>
+<p>¿Desea borrar la categoría "<strong>{{ categoria.nombre }}</strong>"?</p>
+<form method="post">
+  {% csrf_token %}
+  <button class="btn btn-danger">Sí, borrar</button>
+  <a class="btn btn-secondary" href="{% url 'ver_categorias' %}">Cancelar</a>
+</form>
+{% endblock %}
+```
+
+---
+
 ## Procedimientos (README corto)
 ```bash
 # Instrucciones rápidas
@@ -224,11 +429,12 @@ Proyecto Django básico para administrar categorías, productos y proveedores.
 ## Cómo ejecutar
 1. Crear entorno virtual
 2. Instalar dependencias: `pip install -r requirements.txt`
-3. Crear proyecto y app (si no existen) o clonar este repositorio
-4. Agregar `app_Tienda` en `INSTALLED_APPS`
-5. `python manage.py makemigrations`
-6. `python manage.py migrate`
-7. `python manage.py runserver 8033`
+3. Ejecutar en la raíz del proyecto: `django-admin startproject backend_tienda .`
+4. Crear la app: `python manage.py startapp app_Tienda`
+5. Agregar `app_Tienda` en `INSTALLED_APPS` dentro de backend_tienda/settings.py
+6. `python manage.py makemigrations`
+7. `python manage.py migrate`
+8. `python manage.py runserver 8033`
 
 Listo — abre http://127.0.0.1:8033
 ```
