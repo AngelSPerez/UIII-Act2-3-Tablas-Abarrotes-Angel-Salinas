@@ -1,13 +1,9 @@
-# TiendaAbarrotes — Código completo (generado desde PDF)
-
-Este archivo agrupa todos los archivos del proyecto **TiendaAbarrotes** solicitados en el PDF.  
-Cada archivo está separado por bloques de código con la sintaxis típica de GitHub Markdown.
-
+# TiendaAbarrotes
 ---
 
 ## Estructura sugerida del proyecto
 ```
-UIII_Tienda_0777/
+UIII_Tienda_1160/
 ├─ backend_Tienda/
 │  ├─ backend_Tienda/
 │  │  ├─ settings.py
